@@ -8,22 +8,22 @@ import CoreData
 
 class ListController: UIViewController, UITableViewDataSource, UITableViewDelegate, ItemControllerDelegate {
   var container: NSPersistentContainer!
-  var itemArray: [NSManagedObject] = []
+  var itemArray: [Item] = []
   let listView = ListView()
 
   override func loadView() {
     super.loadView()
     title = "Core Data"
     self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addBarButtonTapped))
-
     view = listView
     listView.listTable.dataSource = self
     listView.listTable.delegate = self
     guard container != nil else {
+      //!
       fatalError("NSPersistentContainer is nil")
     }
 
-    let request = NSFetchRequest<NSManagedObject>(entityName: "Item")
+    let request = NSFetchRequest<Item>(entityName: "Item")
     do {
       itemArray = try container.viewContext.fetch(request)
     } catch let error as NSError {
@@ -49,15 +49,15 @@ class ListController: UIViewController, UITableViewDataSource, UITableViewDelega
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let tableViewCell = Library.tableViewCell(style: .default, identifier: nil)
-    tableViewCell.textLabel?.text = itemArray[indexPath.row].value(forKeyPath: "name") as? String
+    tableViewCell.textLabel?.text = itemArray[indexPath.row].name
     return tableViewCell
   }
 
   func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
     if editingStyle == .delete {
       let context = container.viewContext
-      let objectToDelete = itemArray[indexPath.row]
-      context.delete(objectToDelete)
+      let itemToDelete = itemArray[indexPath.row]
+      context.delete(itemToDelete)
       do {
         try context.save()
         itemArray.remove(at: indexPath.row)
@@ -71,7 +71,7 @@ class ListController: UIViewController, UITableViewDataSource, UITableViewDelega
   func done(itemName: String) {
     let context = container.viewContext
     let entity = NSEntityDescription.entity(forEntityName: "Item", in: context)!
-    let item = NSManagedObject(entity: entity, insertInto: context)
+    let item = Item(entity: entity, insertInto: context)
     item.setValue(itemName, forKeyPath: "name")
     do {
       try context.save()
